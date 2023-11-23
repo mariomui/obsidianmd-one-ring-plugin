@@ -1,4 +1,4 @@
-declare module "copy-newer" {
+declare module "['copy-newer']" {
 	function copyNewer(
 		braced_target_files: string,
 		dir: string,
@@ -17,3 +17,10 @@ declare module "js-yaml" {
 		options?: YamlConfig
 	): string;
 }
+export type TemplaterAddOnFigSpec = {
+	addUuid?: () => Promise<string>;
+};
+
+// declare module "obsidian" {
+// 	interface App extends App, TemplaterAddOnFigSpec {}
+// }

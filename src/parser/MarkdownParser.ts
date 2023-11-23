@@ -68,7 +68,7 @@ export const manuYamlConfig = () => {
 	const yamlConfig = {
 		flowLevel: 3,
 		styles: {
-			"!!null": "camelcase",
+			"!!null": "empty",
 		},
 	};
 	return yamlConfig;

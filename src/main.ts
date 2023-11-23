@@ -3,7 +3,6 @@ import {
 	Editor,
 	MarkdownView,
 	Modal,
-	Notice,
 	Plugin,
 	PluginManifest,
 	PluginSettingTab,
@@ -17,11 +16,11 @@ import { Variant } from "./parser/MarkdownParser.types";
 import { sortBy } from "./utils";
 
 interface MyPluginSettings {
-	mySetting: string;
+	prefix: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: "default",
+	prefix: "",
 };
 let workspace: Workspace,
 	// fileManager: FileManager,
@@ -86,38 +85,42 @@ export default class MyPlugin extends Plugin {
 			sortBy
 		);
 	}
+
+	async addUuid() {
+		// Create a index UID with the current timestamp, and a random number
+		const uuid = this.settings.prefix + self.crypto.randomUUID();
+		return uuid;
+	}
+
 	async onload() {
 		await this.loadSettings();
+		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon(
-			"dice",
-			"Sample Plugin",
-			(evt: MouseEvent) => {
-				// Called when the user clicks the icon.
-				new Notice("This is a notice!");
-			}
-		);
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass("my-plugin-ribbon-class");
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText("Status Bar Text");
-
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		this.app.templaterAddOnFig = {
+			addUuid: () => {},
+		};
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		this.app.templaterAddOnFig.addUuid = async () => {
+			return await this.addUuid();
+		};
 		this.addCommand({
-			id: "sort frontmatter",
-			name: "Sort frontmatter",
-			callback: async (...args) => {
-				await this.genSortFrontmatter(args);
+			id: "uuid",
+			name: "check uuid",
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
+				const uuid = await this.addUuid();
+				const cursor = editor.getCursor();
+				editor.replaceRange(uuid, cursor);
 			},
 		});
-		// This adds a simple command that can be triggered anywhere
+		// TODO switch this command out with using my sort frontmatter plugin so i can delete code
 		this.addCommand({
-			id: "open-sample-modal-simple",
-			name: "Open sample modal (simple)",
-			callback: () => {
-				new SampleModal(this.app).open();
+			id: "sort frontmatter",
+			name: "dont use  me Sort frontmatter",
+			callback: async (...args) => {
+				await this.genSortFrontmatter(args);
 			},
 		});
 		// This adds an editor command that can perform some operation on the current editor instance
@@ -149,20 +152,6 @@ export default class MyPlugin extends Plugin {
 				}
 			},
 		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-			console.log("click", evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-		);
 	}
 
 	onunload() {}
@@ -212,15 +201,15 @@ class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Settings for my awesome plugin." });
 
 		new Setting(containerEl)
-			.setName("Setting #1")
-			.setDesc("It's a secret")
+			.setName("PREFIX")
+			.setDesc("Prefix for uuid")
 			.addText((text) =>
 				text
-					.setPlaceholder("Enter your secret")
-					.setValue(this.plugin.settings.mySetting)
+					.setPlaceholder("Enter your prefix")
+					.setValue(this.plugin.settings.prefix)
 					.onChange(async (value) => {
 						console.log("Secret: " + value);
-						this.plugin.settings.mySetting = value;
+						this.plugin.settings.prefix = value;
 						await this.plugin.saveSettings();
 					})
 			);
