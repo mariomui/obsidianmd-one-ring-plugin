@@ -21,6 +21,8 @@ export type TemplaterAddOnFigSpec = {
 	addUuid?: () => Promise<string>;
 };
 
-// declare module "obsidian" {
-// 	interface App extends App, TemplaterAddOnFigSpec {}
-// }
+declare module "obsidian" {
+	export interface App {
+		templaterAddOnFig?: TemplaterAddOnFigSpec;
+	}
+}

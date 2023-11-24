@@ -96,13 +96,6 @@ export default class MyPlugin extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		this.app.templaterAddOnFig = {
-			addUuid: () => {},
-		};
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
 		this.app.templaterAddOnFig.addUuid = async () => {
 			return await this.addUuid();
 		};
