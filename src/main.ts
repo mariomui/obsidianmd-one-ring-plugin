@@ -14,6 +14,7 @@ import {
 import { MarkdownParser } from "./parser/MarkdownParser";
 import { Variant } from "./parser/MarkdownParser.types";
 import { sortBy } from "./utils";
+import { TemplaterAddOnFigSpec } from "typings";
 
 interface MyPluginSettings {
 	prefix: string;
@@ -25,9 +26,26 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 let workspace: Workspace,
 	// fileManager: FileManager,
 	vault: Vault;
+
+const use = <T>(fig: T) => {
+	return new Proxy(fig as Record<string, unknown>, {
+		get(target, prop, receiver) {
+			for (const f in fig) {
+				if (prop === f) {
+					return fig[f];
+				}
+			}
+			return Reflect.get(...[target, prop, receiver]);
+		},
+	});
+};
+const useTemplaterAddOnFig = use<{ figSpecifier: string }>({
+	figSpecifier: "templaterAddOnFig",
+});
+
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
-
+	figSpecifier = useTemplaterAddOnFig.figSpecifier as string;
 	constructor(app: App, plugin: PluginManifest) {
 		super(app, plugin);
 
@@ -92,13 +110,24 @@ export default class MyPlugin extends Plugin {
 		return uuid;
 	}
 
+	#doInjectFunctionIntoAddOnFig(
+		functionName: string,
+		functionImpl: (...args: unknown[]) => unknown
+	): void {
+		const specifier = this.figSpecifier;
+		const isEmpty = !Object.keys(this.app[specifier]);
+		if (isEmpty) {
+			this.app[specifier] = {};
+		}
+		this.app[specifier][functionName] = functionImpl;
+	}
+
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		this.app.templaterAddOnFig.addUuid = async () => {
-			return await this.addUuid();
-		};
+		this.#doInjectFunctionIntoAddOnFig("addUuid", this.addUuid.bind(this));
+
 		this.addCommand({
 			id: "uuid",
 			name: "check uuid",
