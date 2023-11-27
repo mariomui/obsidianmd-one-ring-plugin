@@ -1,8 +1,10 @@
-import { App, TFile, parseYaml } from "obsidian";
+import { TFile, parseYaml } from "obsidian";
 import { ProcessFrontMatterSpec } from "../utils/types";
 import * as jsyaml from "js-yaml";
 import { isObject, sortBy } from "../utils";
 import { Literal, RecurseVariant, Variant } from "./MarkdownParser.types";
+
+export type sortBySpec<T> = (a: T, b: T) => number;
 
 interface MarkdownParserImpl {
 	splitIntoFrontMatterAndContents: (
@@ -47,12 +49,10 @@ export class MarkdownParser implements MarkdownParserImpl {
 	): ReturnType<typeof splitIntoFrontMatterAndContents> {
 		throw new Error("Method not implemented.");
 	}
-	app: App;
 	virtualFile: TFile;
 	file_contents: string;
 
-	constructor(app: App, virtualFile: TFile, file_contents: string) {
-		this.app = app;
+	constructor(virtualFile: TFile, file_contents: string) {
 		this.virtualFile = virtualFile;
 		this.file_contents = file_contents;
 	}
@@ -86,13 +86,13 @@ export function convertObjToYaml(
 export function replaceFileContentsWithSortedFrontMatter(
 	frontMatter: string,
 	content: string,
-	sortBy: (a: Variant, b: Variant) => number
+	sortBy: sortBySpec<Variant>
 ): string {
 	const parsedFm = parseYaml(frontMatter);
 
 	const sortedObj = recurseVariant(parsedFm) as RecurseVariant;
 	const sorted_yaml = (this.convertObjToYaml as typeof convertObjToYaml)(
-		sortedObj as any
+		sortedObj as Record<string, unknown>
 	);
 	console.log({ sortedObj, sorted_yaml, parsedFm });
 	const sorted_file_contents = "---\n" + sorted_yaml + "---\n" + content;
