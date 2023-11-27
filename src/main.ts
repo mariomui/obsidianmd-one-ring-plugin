@@ -1,8 +1,15 @@
-import { App, Editor, MarkdownView, Plugin, PluginManifest } from "obsidian";
+import {
+	App,
+	Editor,
+	EditorPosition,
+	MarkdownView,
+	Plugin,
+	PluginManifest,
+} from "obsidian";
 
 import { SampleSettingTab } from "./components/settings";
 import { SortFrontMatter } from "./components/SortFrontmatter";
-import { pipeMultipleAddCommand } from "./archive/commands";
+import { pipeMultipleAddCommand } from "./extracts/commands";
 
 interface MyPluginSettings {
 	prefix: string;
@@ -30,9 +37,13 @@ const useTemplaterAddOnFig = use<{ figSpecifier: string }>({
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
+
+	// # static injections
 	figSpecifier = useTemplaterAddOnFig.figSpecifier as string;
 
+	// # toolbox injections
 	sortFrontmatterToolbox: SortFrontMatter;
+
 	constructor(app: App, plugin: PluginManifest) {
 		super(app, plugin);
 		this.sortFrontmatterToolbox = new SortFrontMatter(
@@ -66,18 +77,42 @@ export default class MyPlugin extends Plugin {
 
 		this.#doInjectFunctionIntoAddOnFig("addUuid", this.addUuid.bind(this));
 
-		this.addCommand({
-			id: "uuid",
-			name: "check uuid",
-			editorCallback: async (editor: Editor, view: MarkdownView) => {
-				const uuid = await this.addUuid();
-				const cursor = editor.getCursor();
-				editor.replaceRange(uuid, cursor);
-			},
-		});
-
-		// This adds an editor command that can perform some operation on the current editor instance
+		// setup all my editor commands
 		pipeMultipleAddCommand(this);
+
+		const gem = {
+			id: "make quote",
+			name: "make quote",
+			editorCallback: async function (
+				editor: Editor,
+				markdownView: MarkdownView
+			) {
+				console.log({ editor, markdownView });
+				console.log(getLastRow(editor, 3));
+				console.log({
+					cursor: getCursor(editor),
+				});
+			},
+		};
+
+		this.addCommand(gem);
+
+		//https://discuss.codemirror.net/t/what-is-getcursor-ch/6480/2
+		function getCursor(editor: Editor): EditorPosition {
+			// const from: Line =
+			return editor.getCursor();
+
+			// ch is doc.line(pos).from
+			// doc: Text
+			// line: line(n: number) → Line
+			// line https://codemirror.net/docs/ref/#state.Line
+			// ergo pos is the index number of the serialized file_contents.
+			// from is the very start of the line. :thinkign;
+		}
+
+		function getLastRow(editor: Editor, rowNo: number) {
+			return editor.lastLine();
+		}
 	};
 
 	onunload() {}

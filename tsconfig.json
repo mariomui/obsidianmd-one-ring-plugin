@@ -21,7 +21,8 @@
       "./typings",
       "./node_modules/@types",
       "./node_modules/obsidian",
-      "./node_modules/@codemirror/state/dist"
+      "./node_modules/@codemirror/state/dist",
+      "./node_modules/@codemirror/view/dist"
     ],
     "types": [
       "jest",

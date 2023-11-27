@@ -1,10 +1,12 @@
 declare module "['copy-newer']" {
-	function copyNewer(
+	export default function copyNewer(
 		braced_target_files: string,
 		dir: string,
 		options: unknown
 	): Promise<void>;
-	export = copyNewer;
+	// export = {
+	// 	default: copyNewer,
+	// };
 }
 
 declare module "js-yaml" {
