@@ -24,7 +24,7 @@ export type TemplaterAddOnFigSpec = {
 };
 
 declare module "obsidian" {
-	export interface App extends Record<string, unknown> {
+	export interface App extends Record<string, unknown | string> {
 		templaterAddOnFig?: TemplaterAddOnFigSpec;
 	}
 }

@@ -20,7 +20,7 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 };
 
 const use = <T>(fig: T) => {
-	return new Proxy(fig as Record<string, unknown>, {
+	return new Proxy(fig as Record<string, any>, {
 		get(target, prop, receiver) {
 			for (const f in fig) {
 				if (prop === f) {
@@ -31,15 +31,12 @@ const use = <T>(fig: T) => {
 		},
 	});
 };
-const useTemplaterAddOnFig = use<{ figSpecifier: string }>({
-	figSpecifier: "templaterAddOnFig",
-});
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 
 	// # static injections
-	figSpecifier = useTemplaterAddOnFig.figSpecifier as string;
+	figSpecifier: string;
 
 	// # toolbox injections
 	sortFrontmatterToolbox: SortFrontMatter;
@@ -50,6 +47,10 @@ export default class MyPlugin extends Plugin {
 			this.app.workspace,
 			this.app.vault
 		);
+		const useTemplaterAddOnFig = use<{ figSpecifier: string }>({
+			figSpecifier: "templaterAddOnFig",
+		});
+		this.figSpecifier = useTemplaterAddOnFig.figSpecifier;
 	}
 
 	async addUuid() {
@@ -63,7 +64,7 @@ export default class MyPlugin extends Plugin {
 		functionImpl: (...args: unknown[]) => unknown
 	): void {
 		const specifier = this.figSpecifier;
-		const isEmpty = !Object.keys(this.app[specifier]);
+		const isEmpty = !Object.keys(this.app[specifier]) === true;
 		if (isEmpty) {
 			this.app[specifier] = {};
 		}
@@ -71,11 +72,12 @@ export default class MyPlugin extends Plugin {
 		this.app[specifier][functionName] = functionImpl;
 	}
 
-	onload = async () => {
+	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		this.#doInjectFunctionIntoAddOnFig("addUuid", this.addUuid.bind(this));
+		this.app.templaterAddOnFig = {};
+		this.app.templaterAddOnFig.addUuid = this.addUuid.bind(this);
 
 		// setup all my editor commands
 		pipeMultipleAddCommand(this);
@@ -113,7 +115,7 @@ export default class MyPlugin extends Plugin {
 		function getLastRow(editor: Editor, rowNo: number) {
 			return editor.lastLine();
 		}
-	};
+	}
 
 	onunload() {}
 
