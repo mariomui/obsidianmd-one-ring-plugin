@@ -70,6 +70,7 @@ export const manuYamlConfig = () => {
 		styles: {
 			"!!null": "empty",
 		},
+		quotingType: '"',
 	};
 	return yamlConfig;
 };
